@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 
 // Search Component
-const SearchRide = ({ onSearch }) => {
+const SearchRide = ({ onSearch, currentLocation, searchData }) => {
   const [pickupDate, setPickupDate] = useState('')
   const [pickupTime, setPickupTime] = useState('')
   const [dropoffDate, setDropoffDate] = useState('')
@@ -60,83 +60,101 @@ const SearchRide = ({ onSearch }) => {
 
   return (
     <div className="search-ride-container">
-      <div className="search-ride-card">
-        <h2 className="search-title">🔍 Search your next ride</h2>
-        
-        <div className="search-form">
-          <div className="search-sections-container">
-            {/* Pickup Section */}
-            <div className="search-section">
-              <h3 className="section-title">📍 Pickup</h3>
-              <div className="input-group">
-                <div className="input-field">
-                  <label>Date</label>
-                  <input
-                    type="date"
-                    value={pickupDate}
-                    onChange={(e) => setPickupDate(e.target.value)}
-                    min={getTodayDate()}
-                    className="date-input"
-                  />
-                  {!pickupDate && <span className="placeholder-text">Please select Date!</span>}
+      <div className="search-ride-split-layout">
+        {/* Left Half: Search Your Next Ride */}
+        <div className="search-ride-left">
+          <div className="search-ride-card">
+            <h2 className="search-title">🔍 Search your next ride</h2>
+            
+            <div className="search-form">
+              <div className="search-sections-container">
+                {/* Pickup Section */}
+                <div className="search-section">
+                  <h3 className="section-title">📍 Pickup</h3>
+                  <div className="input-group">
+                    <div className="input-field">
+                      <label>Date</label>
+                      <input
+                        type="date"
+                        value={pickupDate}
+                        onChange={(e) => setPickupDate(e.target.value)}
+                        min={getTodayDate()}
+                        className="date-input"
+                      />
+                      {!pickupDate && <span className="placeholder-text">Please select Date!</span>}
+                    </div>
+                    <div className="input-field">
+                      <label>Time</label>
+                      <select
+                        value={pickupTime}
+                        onChange={(e) => setPickupTime(e.target.value)}
+                        className="time-select"
+                      >
+                        <option value="">Please select Time!</option>
+                        {timeOptions.map((time) => (
+                          <option key={time} value={time}>
+                            {time}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="input-field">
-                  <label>Time</label>
-                  <select
-                    value={pickupTime}
-                    onChange={(e) => setPickupTime(e.target.value)}
-                    className="time-select"
-                  >
-                    <option value="">Please select Time!</option>
-                    {timeOptions.map((time) => (
-                      <option key={time} value={time}>
-                        {time}
-                      </option>
-                    ))}
-                  </select>
+
+                {/* Dropoff Section */}
+                <div className="search-section">
+                  <h3 className="section-title">📍 Dropoff</h3>
+                  <div className="input-group">
+                    <div className="input-field">
+                      <label>Date</label>
+                      <input
+                        type="date"
+                        value={dropoffDate}
+                        onChange={(e) => setDropoffDate(e.target.value)}
+                        min={pickupDate || getTodayDate()}
+                        className="date-input"
+                      />
+                      {!dropoffDate && <span className="placeholder-text">Please select Date!</span>}
+                    </div>
+                    <div className="input-field">
+                      <label>Time</label>
+                      <select
+                        value={dropoffTime}
+                        onChange={(e) => setDropoffTime(e.target.value)}
+                        className="time-select"
+                      >
+                        <option value="">Please select Time!</option>
+                        {timeOptions.map((time) => (
+                          <option key={time} value={time}>
+                            {time}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Dropoff Section */}
-            <div className="search-section">
-              <h3 className="section-title">📍 Dropoff</h3>
-              <div className="input-group">
-                <div className="input-field">
-                  <label>Date</label>
-                  <input
-                    type="date"
-                    value={dropoffDate}
-                    onChange={(e) => setDropoffDate(e.target.value)}
-                    min={pickupDate || getTodayDate()}
-                    className="date-input"
-                  />
-                  {!dropoffDate && <span className="placeholder-text">Please select Date!</span>}
-                </div>
-                <div className="input-field">
-                  <label>Time</label>
-                  <select
-                    value={dropoffTime}
-                    onChange={(e) => setDropoffTime(e.target.value)}
-                    className="time-select"
-                  >
-                    <option value="">Please select Time!</option>
-                    {timeOptions.map((time) => (
-                      <option key={time} value={time}>
-                        {time}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              {/* Search Button */}
+              <div className="search-button-container">
+                <button className="search-button" onClick={handleSearch}>
+                  🔍 Search
+                </button>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Search Button */}
-          <div className="search-button-container">
-            <button className="search-button" onClick={handleSearch}>
-              🔍 Search
-            </button>
+        {/* Right Half: Find Your Perfect Ride */}
+        <div className="search-ride-right">
+          <div className="perfect-ride-section">
+            <h1>Find Your Perfect Ride in {currentLocation}</h1>
+            <p>Discover amazing bikes available for rent in your city</p>
+            {searchData && (
+              <div className="search-results-info">
+                <p>🔍 Searching for rides from {searchData.pickup.date} {searchData.pickup.time} to {searchData.dropoff.date} {searchData.dropoff.time}</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -2098,17 +2116,7 @@ function App() {
       {currentPage === 'explore' && (
         <div className="main-content">
           {/* Search Ride Component */}
-          <SearchRide onSearch={handleSearch} />
-
-          <header className="app-header">
-            <h1>Find Your Perfect Ride in {currentLocation}</h1>
-            <p>Discover amazing bikes available for rent in your city</p>
-            {searchData && (
-              <div className="search-results-info">
-                <p>🔍 Searching for rides from {searchData.pickup.date} {searchData.pickup.time} to {searchData.dropoff.date} {searchData.dropoff.time}</p>
-              </div>
-            )}
-          </header>
+          <SearchRide onSearch={handleSearch} currentLocation={currentLocation} searchData={searchData} />
 
           {/* Enhanced Filter Section */}
           <div className="enhanced-filter-section">
