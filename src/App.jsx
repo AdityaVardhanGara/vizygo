@@ -152,7 +152,7 @@ const sampleBikes = [
     name: 'Bajaj Avenger 220',
     type: 'bikes',
     category: 'Bikes',
-    image: '/src/assets/bikesimages/bikes/bajajavenger220.png',
+    image: './assets/bikesimages/bikes/bajajavenger220.png',
     available: false,
     location: 'Indiranagar',
     pricing: {
@@ -188,7 +188,7 @@ const sampleBikes = [
     name: 'CB Hornet 160',
     type: 'bikes',
     category: 'Bikes',
-    image: '/src/assets/bikesimages/bikes/cbhornet160.png',
+    image: './assets/bikesimages/bikes/cbhornet160.png',
     available: false,
     location: 'BTM Layout',
     pricing: {
@@ -224,7 +224,7 @@ const sampleBikes = [
     name: 'FZ V3',
     type: 'bikes',
     category: 'Bikes',
-    image: '/src/assets/bikesimages/bikes/fzv3.png',
+    image: './assets/bikesimages/bikes/fzv3.png',
     available: false,
     location: 'Electronic City',
     pricing: {
@@ -261,7 +261,7 @@ const sampleBikes = [
     name: 'CB 350',
     type: 'premium',
     category: 'Premium',
-    image: '/src/assets/bikesimages/premium/cb350.png',
+    image: './assets/bikesimages/premium/cb350.png',
     available: false,
     location: 'Koramangala',
     pricing: {
@@ -297,7 +297,7 @@ const sampleBikes = [
     name: 'Classic 350',
     type: 'premium',
     category: 'Premium',
-    image: '/src/assets/bikesimages/premium/classic.png',
+    image: './assets/bikesimages/premium/classic.png',
     available: false,
     location: 'Whitefield',
     pricing: {
@@ -334,7 +334,7 @@ const sampleBikes = [
     name: 'Activa 6G',
     type: 'scooties',
     category: 'Scooties',
-    image: '/src/assets/bikesimages/scooties/activa6g.png',
+    image: './assets/bikesimages/scooties/activa6g.png',
     available: false,
     location: 'Jayanagar',
     pricing: {
@@ -370,7 +370,7 @@ const sampleBikes = [
     name: 'Access 125',
     type: 'scooties',
     category: 'Scooties',
-    image: '/src/assets/bikesimages/scooties/access125.png',
+    image: './assets/bikesimages/scooties/access125.png',
     available: false,
     location: 'HSR Layout',
     pricing: {
@@ -406,7 +406,7 @@ const sampleBikes = [
     name: 'TVS NTORQ 125',
     type: 'scooties',
     category: 'Scooties',
-    image: '/src/assets/bikesimages/scooties/TVSNTORQ125.png',
+    image: './assets/bikesimages/scooties/TVSNTORQ125.png',
     available: false,
     location: 'Koramangala',
     pricing: {
