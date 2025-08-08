@@ -144,6 +144,119 @@ const SearchRide = ({ onSearch }) => {
   )
 }
 
+// Chat Support Component
+const ChatSupport = () => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      text: "Hello! How can I help you today?",
+      sender: "bot",
+      timestamp: new Date()
+    }
+  ])
+  const [inputMessage, setInputMessage] = useState('')
+
+  const sendMessage = () => {
+    if (!inputMessage.trim()) return
+
+    // Add user message
+    const userMessage = {
+      id: Date.now(),
+      text: inputMessage,
+      sender: "user",
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, userMessage])
+
+    // Add bot response after a short delay
+    setTimeout(() => {
+      const botMessage = {
+        id: Date.now() + 1,
+        text: "Thank you for your message! Our chatbot is still in the training phase and full functionality is not available yet. For immediate assistance, please contact us at support@vizygo.in or call +91 9182762800.",
+        sender: "bot",
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, botMessage])
+    }, 1000)
+
+    setInputMessage('')
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      sendMessage()
+    }
+  }
+
+  const formatTime = (timestamp) => {
+    return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+
+  return (
+    <div className="chat-support">
+      {/* Chat Toggle Button */}
+      <button 
+        className={`chat-toggle ${isOpen ? 'active' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {isOpen ? '✕' : '💬'}
+      </button>
+
+      {/* Chat Window */}
+      {isOpen && (
+        <div className="chat-window">
+          <div className="chat-header">
+            <div className="chat-header-info">
+              <div className="chat-avatar">🤖</div>
+              <div className="chat-title">
+                <h4>Vizygo Support</h4>
+                <span className="chat-status">• Online</span>
+              </div>
+            </div>
+            <button className="chat-close" onClick={() => setIsOpen(false)}>
+              ✕
+            </button>
+          </div>
+
+          <div className="chat-messages">
+            {messages.map((message) => (
+              <div 
+                key={message.id} 
+                className={`chat-message ${message.sender === 'user' ? 'user-message' : 'bot-message'}`}
+              >
+                <div className="message-content">
+                  <p>{message.text}</p>
+                  <span className="message-time">{formatTime(message.timestamp)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="chat-input">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              className="chat-input-field"
+            />
+            <button 
+              className="chat-send-btn"
+              onClick={sendMessage}
+              disabled={!inputMessage.trim()}
+            >
+              ➤
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Sample bike data
 const sampleBikes = [
   // Bikes Category
@@ -984,7 +1097,7 @@ const AboutUsPage = () => {
   return (
     <div className="about-us-page">
       {/* Hero Section */}
-      <section className="about-hero">
+      <section className="page-hero about-hero">
         <div className="hero-content">
           <h1>🚲 About Vizygo</h1>
           <p className="hero-subtitle">Revolutionizing Urban Mobility</p>
@@ -1247,7 +1360,7 @@ const StoriesPage = () => {
   return (
     <div className="stories-page">
       {/* Hero Section */}
-      <section className="stories-hero">
+      <section className="page-hero stories-hero">
         <div className="hero-content">
           <h1>📖 Bangalore Stories</h1>
           <p className="hero-subtitle">Real experiences from real people exploring the Garden City</p>
@@ -1455,12 +1568,10 @@ const MarketplacePage = () => {
   return (
     <div className="marketplace-page">
       {/* Hero Section */}
-      <section className="marketplace-hero">
+      <section className="page-hero marketplace-hero">
         <div className="hero-content">
-          <div className="construction-icon">🚧</div>
           <h1>🛒 Marketplace</h1>
           <p className="hero-subtitle">Your One-Stop Shop for Riding Gear & Travel Equipment</p>
-          <div className="coming-soon-badge">Coming Soon!</div>
         </div>
       </section>
 
@@ -2255,7 +2366,7 @@ function App() {
       {currentPage === 'offers' && (
         <div className="offers-page">
           {/* Hero Section */}
-          <section className="offers-hero">
+          <section className="page-hero offers-hero">
             <div className="hero-content">
               <h1>🎉 Special Offers</h1>
               <p className="hero-subtitle">Amazing deals and discounts on bike rentals</p>
@@ -2375,6 +2486,9 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Chat Support */}
+      <ChatSupport />
 
       {/* Footer */}
       <Footer onNavigation={handleNavigation} />
