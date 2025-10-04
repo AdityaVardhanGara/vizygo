@@ -175,8 +175,8 @@ const ChatSupport = () => {
   ])
   const [inputMessage, setInputMessage] = useState('')
 
-  const sendMessage = () => {
-    if (!inputMessage.trim()) return
+  const sendMessage = async () => {
+    if (!inputMessage.trim()) return;
 
     // Add user message
     const userMessage = {
@@ -184,22 +184,34 @@ const ChatSupport = () => {
       text: inputMessage,
       sender: "user",
       timestamp: new Date()
-    }
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
 
-    setMessages(prev => [...prev, userMessage])
-
-    // Add bot response after a short delay
-    setTimeout(() => {
+    // Call backend chatbot API
+    try {
+      const res = await fetch('http://localhost:8000/chatbot-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage.text })
+      });
+      const data = await res.json();
       const botMessage = {
         id: Date.now() + 1,
-        text: "Thank you for your message! Our chatbot is still in the training phase and full functionality is not available yet. For immediate assistance, please contact us at support@vizygo.in or call +91 9182762800.",
+        text: data.reply || "Sorry, I couldn't get a response. Please try again later.",
         sender: "bot",
         timestamp: new Date()
-      }
-      setMessages(prev => [...prev, botMessage])
-    }, 1000)
-
-    setInputMessage('')
+      };
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      const botMessage = {
+        id: Date.now() + 1,
+        text: "Sorry, there was an error connecting to support. Please try again later.",
+        sender: "bot",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, botMessage]);
+    }
   }
 
   const handleKeyPress = (e) => {
@@ -622,46 +634,70 @@ const AuthModal = ({ isVisible, onClose, onLogin }) => {
     }
 
     setIsLoading(true)
-    const newOtp = generateOtp()
-    setGeneratedOtp(newOtp)
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      if (authMode === 'signup') {
-        setAuthStep('details')
-      } else {
+    // Call backend API to send OTP (email-based)
+  fetch('http://localhost:8000/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: phoneNumber }) // phoneNumber should be email for login
+    })
+      .then(res => res.json())
+      .then(data => {
+        setIsLoading(false)
         setAuthStep('otp')
-      }
-      alert(`OTP sent to +91${phoneNumber}\nFor demo: ${newOtp}`)
-    }, 1500)
+      })
+      .catch(() => {
+        setIsLoading(false)
+        alert('Failed to send OTP. Please try again.')
+      })
   }
 
   const handleVerifyOtp = () => {
-    if (otp !== generatedOtp) {
-      alert('Invalid OTP. Please try again.')
-      return
-    }
-
     if (authMode === 'signup') {
-      // Signup complete after OTP verification
-      const userData = {
-        phoneNumber: `+91${userDetails.phoneNumber}`,
-        name: `${userDetails.firstName} ${userDetails.lastName}`,
-        email: userDetails.email,
-        occupation: userDetails.occupation,
-        city: userDetails.city,
-        gender: userDetails.gender,
-        dateOfBirth: userDetails.dateOfBirth,
-        isLoggedIn: true
-      }
-      
-      onLogin(userData)
-      onClose()
-      resetForm()
-      alert('Account created successfully! Welcome to VIZYGO!')
+      // Call backend to verify OTP and create account, sending all user details
+      fetch('http://localhost:8000/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: userDetails.email,
+          otp,
+          username: userDetails.email.split('@')[0],
+          password: userDetails.password,
+          first_name: userDetails.firstName,
+          last_name: userDetails.lastName,
+          phone_number: userDetails.phoneNumber,
+          occupation: userDetails.occupation,
+          city: userDetails.city,
+          gender: userDetails.gender,
+          date_of_birth: userDetails.dateOfBirth
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && !data.detail) {
+            // Account created successfully (backend should return user info)
+            const userData = {
+              phoneNumber: `+91${userDetails.phoneNumber}`,
+              name: `${userDetails.firstName} ${userDetails.lastName}`,
+              email: userDetails.email,
+              occupation: userDetails.occupation,
+              city: userDetails.city,
+              gender: userDetails.gender,
+              dateOfBirth: userDetails.dateOfBirth,
+              isLoggedIn: true
+            }
+            onLogin(userData)
+            onClose()
+            resetForm()
+            alert('Account created successfully! Welcome to VIZYGO!')
+          } else {
+            alert(data.detail || 'Invalid or expired OTP. Please try again.')
+          }
+        })
+        .catch(() => {
+          alert('Failed to verify OTP. Please try again.')
+        })
     } else {
-      // Login successful
+      // Login successful (no OTP verification for login in this flow)
       const userData = {
         phoneNumber: `+91${phoneNumber}`,
         name: 'User', // In real app, this would come from backend
@@ -685,18 +721,23 @@ const AuthModal = ({ isVisible, onClose, onLogin }) => {
       return
     }
 
-    // Generate and send OTP
+    // Send OTP via backend and go to OTP modal
     setIsLoading(true)
-    const newOtp = generateOtp()
-    setGeneratedOtp(newOtp)
-    setPhoneNumber(userDetails.phoneNumber) // Set phone number for OTP verification
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      setAuthStep('otp')
-      alert(`OTP sent to +91${userDetails.phoneNumber}\nFor demo: ${newOtp}`)
-    }, 1500)
+    setPhoneNumber(userDetails.phoneNumber)
+  fetch('http://localhost:8000/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: userDetails.email })
+    })
+      .then(res => res.json())
+      .then(data => {
+        setIsLoading(false)
+        setAuthStep('otp')
+      })
+      .catch(() => {
+        setIsLoading(false)
+        alert('Failed to send OTP. Please try again.')
+      })
   }
 
   const handleClose = () => {
@@ -785,6 +826,26 @@ const AuthModal = ({ isVisible, onClose, onLogin }) => {
                     className="form-input full-width"
                   />
                 </div>
+                <div className="input-with-icon">
+                  <span className="input-icon">🔒</span>
+                  <input
+                    type="password"
+                    value={userDetails.password || ''}
+                    onChange={(e) => setUserDetails({...userDetails, password: e.target.value})}
+                    placeholder="Password *"
+                    className="form-input full-width"
+                  />
+                </div>
+                <div className="input-with-icon">
+                  <span className="input-icon">🔒</span>
+                  <input
+                    type="text"
+                    value={userDetails.confirmPassword || ''}
+                    onChange={(e) => setUserDetails({...userDetails, confirmPassword: e.target.value})}
+                    placeholder="Re-enter Password *"
+                    className="form-input full-width"
+                  />
+                </div>
                 
                 <div className="input-with-icon">
                   <span className="input-icon">💼</span>
@@ -866,27 +927,57 @@ const AuthModal = ({ isVisible, onClose, onLogin }) => {
             </div>
           )}
 
-          {/* Phone Number Step (Login only) */}
+          {/* Email/Password Login Step (Login only) */}
           {authStep === 'phone' && authMode === 'login' && (
             <div className="auth-step">
-              <h3>📱 Enter your mobile number</h3>
-              <div className="phone-input-container">
-                <span className="country-code">+91</span>
+              <h3>✉️ Email Login</h3>
+              <div className="input-with-icon">
+                <span className="input-icon">✉️</span>
                 <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="Enter 10-digit mobile number"
-                  className="phone-input"
-                  maxLength="10"
+                  type="email"
+                  value={userDetails.email || ''}
+                  onChange={(e) => setUserDetails({ ...userDetails, email: e.target.value })}
+                  placeholder="Email Address"
+                  className="form-input full-width"
+                  autoFocus
                 />
               </div>
-              <button 
+              <div className="input-with-icon">
+                <span className="input-icon">🔒</span>
+                <input
+                  type="password"
+                  value={userDetails.password || ''}
+                  onChange={(e) => setUserDetails({ ...userDetails, password: e.target.value })}
+                  placeholder="Password"
+                  className="form-input full-width"
+                />
+              </div>
+              <button
                 className="auth-btn primary"
-                onClick={handleSendOtp}
-                disabled={isLoading || phoneNumber.length !== 10}
+                onClick={async () => {
+                  setIsLoading(true)
+                  try {
+                    const res = await fetch('http://localhost:8000/login', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: userDetails.email, password: userDetails.password })
+                    })
+                    const data = await res.json()
+                    setIsLoading(false)
+                    if (res.ok && data && !data.detail) {
+                      onLogin({ ...data, isLoggedIn: true })
+                      onClose()
+                    } else {
+                      alert(data.detail || 'Invalid email or password')
+                    }
+                  } catch {
+                    setIsLoading(false)
+                    alert('Login failed. Please try again.')
+                  }
+                }}
+                disabled={isLoading || !userDetails.email || !userDetails.password}
               >
-                {isLoading ? '📤 Sending...' : '📤 Get OTP'}
+                {isLoading ? '🔄 Logging in...' : '🔐 Login'}
               </button>
             </div>
           )}
@@ -1335,20 +1426,41 @@ const StoriesPage = () => {
     }))
   }
 
-  const handleShareStory = () => {
+  const handleShareStory = async () => {
     if (!storyTitle || !storyContent) {
       alert('Please fill in both title and story content!')
       return
     }
-    
-    // Reset form
-    setStoryTitle('')
-    setStoryContent('')
-    setStoryImage(null)
-    setShowShareModal(false)
-    
-    // Show success modal instead of alert
-    setShowSuccessModal(true)
+
+    // Prepare story data
+    const storyData = {
+      title: storyTitle,
+      content: storyContent,
+      author: 'Anonymous', // Replace with logged-in user if available
+      location: '', // Optionally add location
+      category: '', // Optionally add category
+      image_url: '' // Optionally handle image upload
+    }
+
+    try {
+      const res = await fetch('http://localhost:8000/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(storyData)
+      })
+      if (res.ok) {
+        setStoryTitle('')
+        setStoryContent('')
+        setStoryImage(null)
+        setShowShareModal(false)
+        setShowSuccessModal(true)
+      } else {
+        const data = await res.json()
+        alert(data.detail || 'Failed to submit story. Please try again.')
+      }
+    } catch (err) {
+      alert('Failed to submit story. Please try again.')
+    }
   }
 
   const getCategoryIcon = (category) => {
